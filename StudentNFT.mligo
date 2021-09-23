@@ -24,6 +24,19 @@ type transfer =
 //address to recieve money from property sales
 let publisher_address : address = ("tz1iYZE6TxZ5B4wDjuVzvi8s456h788DbZAv" : address)
 
+
+let update_item(property_kind_index,property_kind,storage:property_id*property_supply*property_storage): property_storage =
+
+  if (property_kind.sale_status = true) then
+    let property_storage: property_storage = Map.update
+      property_kind_index
+      (Some { property_kind with out_of_stock = true })
+      property_storage
+    in
+    property_storage
+
+
+
 // main function
 let main (property_kind_index, property_storage : nat * property_storage) : return =
     //checks if the property exist
@@ -49,10 +62,7 @@ let main (property_kind_index, property_storage : nat * property_storage) : retu
   in
 
  //Update our `property_storage` stock levels.
-  let property_storage = Map.update
-    property_kind_index
-    (Some { property_kind with out_of_stock = true })
-    property_storage
+  let property_storage = update_item(property_kind_index,property_kind,property_storage)
   in
 
   let tr : transfer = {
