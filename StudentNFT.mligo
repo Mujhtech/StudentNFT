@@ -1,5 +1,5 @@
 //the useed types in the contract
-type property_supply = { user_address : address ; property_price : tez ; sale_status : bool ; property_name : string ; property_description : string }
+type property_supply = { id: int; user_address : address ; property_price : tez ; sale_status : bool ; out_of_stock : bool; property_name : string ; property_description : string }
 type property_storage = (nat, property_supply) map
 type return = operation list * property_storage
 type property_id = nat
@@ -22,7 +22,7 @@ type transfer =
 }
 
 //address to recieve money from property sales
-let publisher_address : address = ("tz1Rm3pAnn6Se4JHaTQ6af3S1bPnjLL5VZbU" : address)
+let publisher_address : address = ("tz1iYZE6TxZ5B4wDjuVzvi8s456h788DbZAv" : address)
 
 // main function
 let main (property_kind_index, property_storage : nat * property_storage) : return =
@@ -44,14 +44,14 @@ let main (property_kind_index, property_storage : nat * property_storage) : retu
   in
 
  // Check if the property is in stock.
-  let () = if property_kind.property_stock = 0n then
+  let () = if property_kind.out_of_stock = false then
     failwith "Sorry, This property is no more available."
   in
 
  //Update our `property_storage` stock levels.
   let property_storage = Map.update
     property_kind_index
-    (Some { property_kind with property_stock = abs (property_kind.property_stock - 1n) })
+    (Some { property_kind with out_of_stock = true })
     property_storage
   in
 
@@ -59,7 +59,7 @@ let main (property_kind_index, property_storage : nat * property_storage) : retu
     from_ = Tezos.self_address;
     txs = [ {
       to_ = Tezos.sender;
-      property_id = abs (property_kind.property_stock - 1n);
+      property_id = abs( property_kind.id );
       amount = 1n;
     } ];
   } 
@@ -67,7 +67,7 @@ let main (property_kind_index, property_storage : nat * property_storage) : retu
 
   // Transfer FA2 functionality
   let entrypoint : transfer list contract = 
-    match ( Tezos.get_entrypoint_opt "%transfer" property_kind.property_address : transfer list contract option ) with
+    match ( Tezos.get_entrypoint_opt "%transfer" property_kind.user_address : transfer list contract option ) with
     | None -> ( failwith "Invalid external token contract" : transfer list contract )
     | Some e -> e
   in
